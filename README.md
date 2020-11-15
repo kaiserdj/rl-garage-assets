@@ -3,6 +3,8 @@ Bot created with the sole intention of generating a list of all the thumbnails o
 
 Due to the encryption of the original files, I collect all the data and images, from [RL Garage](https://rocket-league.com/items)
 
+It still has a few items that are not detected well, but it only hovers around 100 objects, it is still working on it.
+
 ### Install
 Clone this project
 
