@@ -5,6 +5,8 @@ Due to the encryption of the original files, I collect all the data and images, 
 
 It still has a few items that are not detected well, but it only hovers around 100 objects, it is still working on it.
 
+List of items not available: https://github.com/kaiserdj/rl-garage-assets/wiki/Items-not-available
+
 ### Example output
 
  - Map of items with information: https://github.com/kaiserdj/rl-garage-assets/blob/main/output/data.json
