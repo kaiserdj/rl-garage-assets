@@ -150,7 +150,6 @@ class RL_garage extends Browser {
                 type.forEach((elem) => {
                     let name_check = attributes["name"];
 
-                    name_check = name_check.replace(' (Alpha Reward)', '');
                     if (name_check.includes('(Alpha Reward)')) {
                         name_check = name_check.replace(' (Alpha Reward)', '');
                         name_check = `(Alpha Reward) ${name_check}`;
