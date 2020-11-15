@@ -92,7 +92,7 @@ class RL_garage extends Browser {
         missing = [...new Set(missing)];
         missing = {missing};
         console.log(missing);
-        writeFile(`./input/missing.json`, JSON.stringify(missing), function (err) {
+        writeFile(`./output/missing.json`, JSON.stringify(missing), function (err) {
             if (err) {
                 return console.log(err);
             }
@@ -209,8 +209,8 @@ class RL_garage extends Browser {
     }
 
     async downloadAssets(data) {
-        if (!fs.existsSync("./input/assets")) {
-            fs.mkdirSync("./input/assets");
+        if (!fs.existsSync("./output/assets")) {
+            fs.mkdirSync("./output/assets");
         }
         for (let i = 0; i < data.length; i++) {
             let source = await this.page.goto(data[i].src);
@@ -220,7 +220,7 @@ class RL_garage extends Browser {
             } else {
                 name = data[i].src.split("/").pop();
             }
-            writeFile(`./input/assets/${name}`, await source.buffer(), function (err) {
+            writeFile(`./output/assets/${name}`, await source.buffer(), function (err) {
                 if (err) {
                     return console.log(err);
                 }
