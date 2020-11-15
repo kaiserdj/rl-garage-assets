@@ -172,6 +172,10 @@ class RL_garage extends Browser {
                         name_check = "Blast-Off";
                     }
 
+                    if (name_check === "Blacklight: Retribution") {
+                        name_check = "Retribution";
+                    }
+
                     if (attributes.category === "Crates") {
                         if (name_check.includes('(Unlocked)')) {
                             name_check = name_check.replace(' Crate', '');
