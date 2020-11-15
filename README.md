@@ -21,7 +21,7 @@ Install the dependencies:
 1. run the bot
 
 ```bash
-> npm start
+> npm run
 ```
 
 ## Contributing
