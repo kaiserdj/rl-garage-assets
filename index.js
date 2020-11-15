@@ -22,6 +22,7 @@ async function run() {
     });
     
     await rl_garage.downloadAssets(data);
+    await rl_garage.close();
     console.log("Complete download Assets");
 
     let results = await countLostItems(DB, data);

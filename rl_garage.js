@@ -226,6 +226,10 @@ class RL_garage extends Browser {
             });
         }
     }
+
+    async close(){
+        await super.close();
+    }
 }
 
 module.exports = RL_garage;
