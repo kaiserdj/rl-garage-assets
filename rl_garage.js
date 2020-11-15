@@ -155,6 +155,11 @@ class RL_garage extends Browser {
                         name_check = `(Alpha Reward) ${name_check}`;
                     }
 
+                    if (name_check.includes('(Beta Reward)')) {
+                        name_check = name_check.replace(' (Beta Reward)', '');
+                        name_check = `(Beta Reward) ${name_check}`;
+                    }
+
                     if (attributes.editionname === "Inverted") {
                         name_check = `${name_check}: Inverted`;
                     }
