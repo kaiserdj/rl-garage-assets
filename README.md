@@ -36,6 +36,17 @@ Install the dependencies:
 > npm run
 ```
 
+### Update rocket league items db
+
+- Run rocket league with BM mod ([bakkesmod](https://www.bakkesmod.com/))
+- Open the console (F6)
+- Run the command: `dumpitems` 
+- Copy the generated `items.csv` file in the directory:
+	> C: \ Program Files (x86) \ Steam \ steamapps \ common \ rocketleague \ Binaries \ Win64
+	
+	(default is that directory)
+- Paste the file `items.csv`, in the input folder of the rl-garage-assets project
+
 ## Contributing
 
 For bugs, questions, and discussions please use the [Github Issues](https://github.com/kaiserdj/rl-garage-assets/issues)
