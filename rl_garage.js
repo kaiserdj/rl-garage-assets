@@ -1,20 +1,11 @@
 const Browser = require("./browser");
-const {
-    promisify
-} = require("util");
+const { promisify } = require("util");
 const fs = require("fs");
-const { Console } = require("console");
 const writeFile = promisify(fs.writeFile);
 
 class RL_garage extends Browser {
-    constructor(DB) {
+    constructor() {
         super();
-
-        this.db = DB;
-
-        this.db.forEach((elem) => {
-            elem.check = elem.Name.split(": ").pop().toLowerCase();
-        }); 
 
         return (async () => {
             await super.browser();
@@ -24,221 +15,240 @@ class RL_garage extends Browser {
     }
 
     async types() {
-        const types = [{
-                href: "https://rocket-league.com/items/bodies",
-                original: ["Body"]
-            },
-            {
-                href: "https://rocket-league.com/items/wheels",
-                original: ["Wheels"]
-            },
-            {
-                href: "https://rocket-league.com/items/boosts",
-                original: ["Boost"]
-            },
-            {
-                href: "https://rocket-league.com/items/antennas",
-                original: ["Antenna"]
-            },
-            {
-                href: "https://rocket-league.com/items/decals",
-                original: ["Skin"]
-            },
-            {
-                href: "https://rocket-league.com/items/toppers",
-                original: ["Hat"]
-            },
-            {
-                href: "https://rocket-league.com/items/trails",
-                original: ["SupersonicTrail"]
-            },
-            {
-                href: "https://rocket-league.com/items/explosions",
-                original: ["GoalExplosion"]
-            },
-            {
-                href: "https://rocket-league.com/items/paints",
-                original: ["PaintFinish"]
-            },
-            {
-                href: "https://rocket-league.com/items/banners",
-                original: ["PlayerBanner"]
-            },
-            {
-                href: "https://rocket-league.com/items/engines",
-                original: ["EngineAudio"]
-            },
-            {
-                href: "https://rocket-league.com/items/borders",
-                original: ["PlayerAvatarBorder"]
-            },
-            {
-                href: "https://rocket-league.com/items/crates",
-                original: ["Blueprint", "PremiumInventory"]
-            }
+        const types = [
+            "https://rocket-league.com/items/misc",
+            "https://rocket-league.com/items/bodies",
+            "https://rocket-league.com/items/decals",
+            "https://rocket-league.com/items/paints",
+            "https://rocket-league.com/items/wheels",
+            "https://rocket-league.com/items/boosts",
+            "https://rocket-league.com/items/toppers",
+            "https://rocket-league.com/items/antennas",
+            "https://rocket-league.com/items/explosions",
+            "https://rocket-league.com/items/trails",
+            "https://rocket-league.com/items/anthems",
+            "https://rocket-league.com/items/banners",
+            "https://rocket-league.com/items/borders",
+            "https://rocket-league.com/items/engines",
+            "https://rocket-league.com/items/titles",
+            "https://rocket-league.com/items/stickers",
+            "https://rocket-league.com/items/avatars",
         ];
 
-        let result = [];
-        let missing = [];
+        let data = [];
 
-        for (let i = 0; i < types.length; i++) {
-            await this.page.goto(types[i].href);
-            let items = await this.items(types[i].original);
-            result = result.concat(items.result);
-            missing = missing.concat(items.missing);
+        for await (const type of types) {
+            await this.page.goto(type);
+            let items = await this.items();
+            for await (let item of items) {
+                data.push(await this.loadItem(item));
+            }
         }
 
-        console.log(`"id-rl-garage" not found in DB:`);
-        missing = [...new Set(missing)];
-        missing = {missing};
-        console.log(missing);
-        writeFile(`./output/missing.json`, JSON.stringify(missing), function (err) {
-            if (err) {
-                return console.log(err);
-            }
-        });
-
-        return result;
+        return data;
     }
 
-    async items(type) {
-        return await this.page.evaluate((DB, type) => {
+    async items() {
+        return await this.page.evaluate(() => {
             let result = [];
-            let missing = [];
 
-            // Remove duplicated items in https://rocket-league.com/items/crates
-            if (type[0] === "Blueprint") {
-                let elements = document.querySelectorAll(".rlg-item-group-content");
-                for (var i = 0; i < elements.length; i++) {
-                    let h1 = elements[i].querySelectorAll("h1")[0];
-                    if (h1.innerText !== "Archived items") {
-                        elements[i].parentNode.removeChild(elements[i]);
-                    }
-                }
-            }
-
-            let items = document.querySelectorAll(".rlg-item__container");
+            let items = document.querySelectorAll(
+                ".rlg-items-container > div > div:nth-child(2) > div"
+            );
 
             items.forEach((item) => {
                 let attributes = {};
-                let attributeNames = item.getAttributeNames();
-                attributeNames = attributeNames.filter(x => x !== 'class');
 
-                attributeNames.forEach((elem) => {
-                    let data = item.getAttribute(elem);
-                    if (data === "" || data === "true") {
-                        data = true;
-                    } else if (data === "false") {
-                        data = false;
-                    }
-                    attributes[elem.split("data-")[1]] = data;
-                });
-
-                let itemExt = item.querySelectorAll(".rlg-items-item")[0];
-
-                let tradelock = item.querySelectorAll(".tradelock");
-                if (tradelock.length !== 0) {
-                    attributes.tradelock = true;
-                } else {
-                    attributes.tradelock = false;
-                }
-
-                attributes.src = `https://rocket-league.com${itemExt.getElementsByTagName("img")[0].getAttribute("src")}`;
-
-                attributes["id-rl-garage"] = itemExt.getAttribute("data-id");
-
-                type.forEach((elem) => {
-                    let name_check = attributes["name"];
-
-                    if (name_check.includes('(Alpha Reward)')) {
-                        name_check = name_check.replace(' (Alpha Reward)', '');
-                        name_check = `(Alpha Reward) ${name_check}`;
-                    }
-
-                    if (name_check.includes('(Beta Reward)')) {
-                        name_check = name_check.replace(' (Beta Reward)', '');
-                        name_check = `(Beta Reward) ${name_check}`;
-                    }
-
-                    if (attributes.editionname === "Inverted") {
-                        name_check = `${name_check}: Inverted`;
-                    }
-
-                    if (name_check === "Samus' Gunship") {
-                        name_check = "Samus's Gunship";
-                    }
-
-                    if (name_check === "Blast Off") {
-                        name_check = "Blast-Off";
-                    }
-
-                    if (name_check === "Blacklight: Retribution") {
-                        name_check = "Retribution";
-                    }
-
-                    if (attributes.category === "Crates") {
-                        if (name_check.includes('(Unlocked)')) {
-                            name_check = name_check.replace(' Crate', '');
-                            name_check = `Crate - ${name_check}`;
-                        }
-
-                        if (name_check.includes('Blueprint')) {
-                            name_check = name_check.replace(' Blueprint', '');
-                        }
-
-                        if (name_check === "Beach Blast") {
-                            name_check = "RL Beach Blast";
-                        }
-                    }
-
-                    name_check = name_check.toLowerCase();
-
-                    let data;
-
-                    if (name_check === "credits") {
-                        data = DB.find(x => x.check === name_check);
-                    } else {
-                        data = DB.find(x => x.Type === elem && x.check === name_check);
-                    }
-
-
-                    if (data) {
-                        attributes["db"] = data;
-                        delete attributes["db"].check;
-                    } else {
-                        missing.push(attributes["id-rl-garage"]);
-                    }
-                });
+                attributes["id-rl-garage"] = parseInt(
+                    item.getElementsByTagName("a")[0].getAttribute("data-id")
+                );
+                attributes.name = item.querySelector("h2").innerText;
+                attributes.link =
+                    location.origin +
+                    item.getElementsByTagName("a")[0].getAttribute("href");
+                attributes.src =
+                    location.origin +
+                    item
+                        .querySelector(".rlg-item__itemimage")
+                        .getAttribute("src");
 
                 result.push(attributes);
             });
-            return {result: result, missing: missing};
-        }, this.db, type);
+
+            return result;
+        });
     }
 
-    async downloadAssets(data) {
+    async loadItem(item) {
+        let pageItem = await this.browser.newPage();
+        await pageItem.setBypassCSP(true);
+        await pageItem.setDefaultTimeout(30000);
+        await pageItem.setRequestInterception(true);
+        await pageItem.on("request", (req) => {
+            if (
+                req.resourceType() === "image" ||
+                req.resourceType() === "stylesheet" ||
+                req.resourceType() === "font" ||
+                req.resourceType() === "beacon" ||
+                req.resourceType() === "csp_report" ||
+                req.resourceType() === "imageset" ||
+                req.resourceType() === "media" ||
+                req.resourceType() === "object" ||
+                req.resourceType() === "object_subrequest" ||
+                req.resourceType() === "ping" ||
+                req.resourceType() === "script" ||
+                req.resourceType() === "speculative" ||
+                req.resourceType() === "sub_frame" ||
+                req.resourceType() === "web_manifest" ||
+                req.resourceType() === "websocket" ||
+                req.resourceType() === "xml_dtd" ||
+                req.resourceType() === "xmlhttprequest" ||
+                req.resourceType() === "xslt" ||
+                req.resourceType() === "other"
+            ) {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
+
+        await pageItem.goto(item.link);
+
+        let checkTitle = await pageItem.evaluate(
+            () => document.querySelector(".rlg-page__title > h1").innerText
+        );
+
+        while (checkTitle != item.name) {
+            console.log("Active web protection, waiting to continue");
+            await wait(3000);
+            await pageItem.reload();
+            checkTitle = await pageItem.evaluate(
+                () => document.querySelector(".rlg-page__title > h1").innerText
+            );
+            if (checkTitle == item.name) {
+                console.log("Web protection passed");
+            }
+        }
+
+        let result = await pageItem.evaluate(() => {
+            let result = {};
+            let info = document.querySelectorAll(".rlg-item-details-table tr");
+
+            info.forEach((data) => {
+                let type = data.querySelector("th").innerText;
+
+                data = data.querySelector("td");
+
+                if (data.querySelectorAll("ul").length == 0) {
+                    if (data.querySelectorAll("p").length > 1) {
+                        let list = data.querySelectorAll("p");
+                        data = [];
+
+                        list.forEach((item) => data.push(item.innerText));
+                        data = data.toString();
+                    } else {
+                        if (data.innerText.toLowerCase() == "yes") {
+                            data = true;
+                        } else if (data.innerText.toLowerCase() == "no") {
+                            data = false;
+                        } else {
+                            data = data.innerText;
+                        }
+                    }
+                } else {
+                    let list = data.querySelectorAll("li");
+                    data = [];
+
+                    list.forEach((item) => data.push(item.innerText));
+                    data = data.toString();
+                }
+
+                result[type] = data;
+            });
+
+            let checkPaints = document.querySelector(".rlg-itemdb-paints");
+
+            if (checkPaints.innerHTML != "\n") {
+                result.paints = [];
+                let paints = checkPaints.querySelectorAll("a");
+
+                paints.forEach((paint) => {
+                    let dataPaint = {};
+                    dataPaint.color = paint.querySelector("h2").innerText;
+                    dataPaint.src =
+                        location.origin +
+                        paint.querySelector("img").getAttribute("src");
+
+                    result.paints.push(dataPaint);
+                });
+            }
+
+            return result;
+        });
+
+        Object.assign(item, result);
+
+        await this.downloadAssets(item);
+
+        await pageItem.close();
+
+        return item;
+    }
+
+    async downloadAssets(item) {
+        let pageDownloader = await this.browser.newPage();
+
         if (!fs.existsSync("./output/assets")) {
             fs.mkdirSync("./output/assets");
         }
-        for (let i = 0; i < data.length; i++) {
-            let source = await this.page.goto(data[i].src);
-            let name;
-            if (data[i].db) {
-                name = `${data[i].db.Id}.${data[i].src.split(".").pop()}`;
-            } else {
-                name = data[i].src.split("/").pop();
-            }
-            writeFile(`./output/assets/${name}`, await source.buffer(), function (err) {
-                if (err) {
-                    return console.log(err);
+
+        if (item.paints) {
+            for await (let elem of item.paints) {
+                let source = await pageDownloader.goto(elem.src);
+                let color = "";
+                if (elem.color != "Unpainted") {
+                    color = `_${elem.color.trim()}`;
                 }
-            });
+                let name = `${item["id-rl-garage"]}_${item.name}${color}.png`;
+
+                writeFile(
+                    `./output/assets/${name}`,
+                    await source.buffer(),
+                    function (err) {
+                        if (err) {
+                            return console.log(err);
+                        }
+                    }
+                );
+            }
+        } else {
+            let source = await pageDownloader.goto(item.src);
+            let name = `${item["id-rl-garage"]}_${item.name}.png`;
+            writeFile(
+                `./output/assets/${name}`,
+                await source.buffer(),
+                function (err) {
+                    if (err) {
+                        return console.log(err);
+                    }
+                }
+            );
         }
+
+        console.log(`Download of item "${item.name}" completed`);
+
+        await pageDownloader.close();
     }
 
-    async close(){
+    async close() {
         await super.close();
     }
 }
 
 module.exports = RL_garage;
+
+const wait = (ms) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(), ms);
+    });
+};

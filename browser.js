@@ -1,7 +1,6 @@
 const puppeteer = require("puppeteer-extra");
 puppeteer.use(require("puppeteer-extra-plugin-stealth")());
 
-let skippedResources = [];
 class Browser {
     async browser () {
         this.browser = await puppeteer.launch({"headless": false, userDataDir: "Data"});
@@ -11,8 +10,25 @@ class Browser {
         await this.page.setDefaultTimeout(30000);
         await this.page.setRequestInterception(true);
         await this.page.on("request", (req) => {
-            let requestUrl = req._url.split("?")[0].split("#")[0];
-            if (req.resourceType() === "stylesheet" || req.resourceType() === "font" || skippedResources.some((resource) => requestUrl.indexOf(resource) !== -1)) {
+            if (req.resourceType() === "image" || 
+            req.resourceType() === "stylesheet" || 
+            req.resourceType() === "font" || 
+            req.resourceType() === "beacon" || 
+            req.resourceType() === "csp_report" || 
+            req.resourceType() === "imageset" || 
+            req.resourceType() === "media" || 
+            req.resourceType() === "object" || 
+            req.resourceType() === "object_subrequest" || 
+            req.resourceType() === "ping" || 
+            req.resourceType() === "script" || 
+            req.resourceType() === "speculative" || 
+            req.resourceType() === "sub_frame" || 
+            req.resourceType() === "web_manifest" || 
+            req.resourceType() === "websocket" || 
+            req.resourceType() === "xml_dtd" || 
+            req.resourceType() === "xmlhttprequest" || 
+            req.resourceType() === "xslt" || 
+            req.resourceType() === "other") {
                 req.abort();
             } else {
                 req.continue();
