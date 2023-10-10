@@ -53,7 +53,7 @@ class RL_garage extends Browser {
             let result = [];
 
             let items = document.querySelectorAll(
-                ".rlg-items-container > div > div:nth-child(2) > div"
+                ".rlg-items-container > div > div:nth-child(2) > .rlg-item__container"
             );
 
             items.forEach((item) => {
