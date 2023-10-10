@@ -202,6 +202,8 @@ class RL_garage extends Browser {
             fs.mkdirSync("./output/assets");
         }
 
+        let itemName = item.name.replaceAll("/", `-`).replaceAll("\\", `-`);
+
         if (item.paints) {
             for await (let elem of item.paints) {
                 let source = await pageDownloader.goto(elem.src);
@@ -209,7 +211,7 @@ class RL_garage extends Browser {
                 if (elem.color != "Unpainted") {
                     color = `_${elem.color.trim()}`;
                 }
-                let name = `${item["id-rl-garage"]}_${item.name}${color}.png`;
+                let name = `${item["id-rl-garage"]}_${itemName}${color}.png`;
 
                 writeFile(
                     `./output/assets/${name}`,
@@ -223,7 +225,7 @@ class RL_garage extends Browser {
             }
         } else {
             let source = await pageDownloader.goto(item.src);
-            let name = `${item["id-rl-garage"]}_${item.name}.png`;
+            let name = `${item["id-rl-garage"]}_${itemName}.png`;
             writeFile(
                 `./output/assets/${name}`,
                 await source.buffer(),
@@ -235,7 +237,7 @@ class RL_garage extends Browser {
             );
         }
 
-        console.log(`Download of item "${item.name}" completed`);
+        console.log(`Download of item "${itemName}" completed`);
 
         await pageDownloader.close();
     }
