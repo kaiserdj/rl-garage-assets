@@ -38,10 +38,15 @@ class RL_garage extends Browser {
         let data = [];
 
         for await (const type of types) {
-            await this.page.goto(type);
+            await GotoWithRetry(this.page, type);
             let items = await this.items();
             for await (let item of items) {
-                data.push(await this.loadItem(item));
+                try{
+                    data.push(await this.loadItem(item));
+                } catch(err){
+                    console.log(err);
+                    console.log(`error in: ${item.toString()}`)
+                }
             }
         }
 
@@ -112,7 +117,7 @@ class RL_garage extends Browser {
             }
         });
 
-        await pageItem.goto(item.link);
+        await GotoWithRetry(pageItem, item.link);
 
         let checkTitle = await pageItem.evaluate(
             () => document.querySelector(".rlg-page__title > h1").innerText
@@ -202,11 +207,11 @@ class RL_garage extends Browser {
             fs.mkdirSync("./output/assets");
         }
 
-        let itemName = item.name.replaceAll("/", `-`).replaceAll("\\", `-`);
+        let itemName = item.name.replaceAll("/", `-`).replaceAll("\\", `-`).replaceAll("?", `-`);
 
         if (item.paints) {
             for await (let elem of item.paints) {
-                let source = await pageDownloader.goto(elem.src);
+                let source = await GotoWithRetry(pageDownloader, elem.src);
                 let color = "";
                 if (elem.color != "Unpainted") {
                     color = `_${elem.color.trim()}`;
@@ -224,7 +229,7 @@ class RL_garage extends Browser {
                 );
             }
         } else {
-            let source = await pageDownloader.goto(item.src);
+            let source = await GotoWithRetry(pageDownloader, item.src);
             let name = `${item["id-rl-garage"]}_${itemName}.png`;
             writeFile(
                 `./output/assets/${name}`,
@@ -254,3 +259,18 @@ const wait = (ms) => {
         setTimeout(() => resolve(), ms);
     });
 };
+
+const GotoWithRetry = async (page, url, retryCount = 2) => {
+    if (retryCount < 0) {
+      throw new Error(`Failed to navigate to ${url} after 3 retries.`);
+    }
+    const [rsp] = await Promise.all([
+      page.goto(url, {
+        timeout: 120 * 1000
+      })
+    ]).catch(async () => {
+      return await GotoWithRetry(page, url, retryCount - 1);
+    });
+
+    return rsp;
+  };
