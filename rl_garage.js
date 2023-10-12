@@ -41,11 +41,11 @@ class RL_garage extends Browser {
             await GotoWithRetry(this.page, type);
             let items = await this.items();
             for await (let item of items) {
-                try{
+                try {
                     data.push(await this.loadItem(item));
-                } catch(err){
+                } catch (err) {
                     console.log(err);
-                    console.log(`error in: ${item.toString()}`)
+                    console.log(`error in: ${item.toString()}`);
                 }
             }
         }
@@ -207,7 +207,11 @@ class RL_garage extends Browser {
             fs.mkdirSync("./output/assets");
         }
 
-        let itemName = item.name.replaceAll("/", `-`).replaceAll("\\", `-`).replaceAll("?", `-`);
+        let itemName = item.name
+            .replaceAll("/", `-`)
+            .replaceAll("\\", `-`)
+            .replaceAll("?", `-`)
+            .replaceAll(":", ``);
 
         if (item.paints) {
             for await (let elem of item.paints) {
@@ -262,15 +266,15 @@ const wait = (ms) => {
 
 const GotoWithRetry = async (page, url, retryCount = 2) => {
     if (retryCount < 0) {
-      throw new Error(`Failed to navigate to ${url} after 3 retries.`);
+        throw new Error(`Failed to navigate to ${url} after 3 retries.`);
     }
     const [rsp] = await Promise.all([
-      page.goto(url, {
-        timeout: 120 * 1000
-      })
+        page.goto(url, {
+            timeout: 120 * 1000,
+        }),
     ]).catch(async () => {
-      return await GotoWithRetry(page, url, retryCount - 1);
+        return await GotoWithRetry(page, url, retryCount - 1);
     });
 
     return rsp;
-  };
+};
